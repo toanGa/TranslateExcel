@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -49,11 +50,6 @@ namespace NT
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //string textParser = File.ReadAllText("DebugStranslate.txt");
-            //string parserd = Translator.ParseResut(textParser);
-            //textBoxDebug.Text = parserd;
-            //return;
-
             int row;
             int col;
             int.TryParse(textBoxRow.Text, out row);
@@ -77,11 +73,13 @@ namespace NT
 
                     translateText = translator.Translate(value, comboBoxLangSrc.Text, comboBoxLangDst.Text);
 
+                    Thread.Sleep(5000);
+
                     outputFileXls.SetCellValues(row, col, translateText);
                 }
             }
 
-            outputFileXls.Sysn();
+            outputFileXls.SaveAs(comboBox1.Text + DateTime.Now.ToString() + ".xlsx");
 
             //textBoxDebug.Text = translateText;
         }
@@ -89,6 +87,7 @@ namespace NT
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             inputFileXls.Close();
+            outputFileXls.Close();
         }
     }
 }
