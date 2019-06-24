@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -23,28 +24,6 @@ namespace NT
         public Form1()
         {
             InitializeComponent();
-
-            translator = new Translator();
-
-            inputFileXls = new ExcelUtils();
-            inputFileXls.ExcellFileName = @"E:\20190610_Testcase EVT - Copy 2.xlsx";
-            inputFileXls.Open();
-
-            outputFileXls = new ExcelUtils();
-            outputFileXls.ExcellFileName = @"E:\20190610_Testcase EVT - Copy 2.xlsx";
-            outputFileXls.OpenUI();
-
-            comboBox1.DataSource = inputFileXls.AllSheets;
-            comboBox1.Text = inputFileXls.AllSheets[0];
-
-            string[] langSrc = Translator.Languages.ToArray();
-            string[] langDst = Translator.Languages.ToArray();
-            
-            comboBoxLangSrc.DataSource = langSrc;
-            comboBoxLangDst.DataSource = langDst;
-
-            comboBoxLangSrc.Text = "Vietnamese"; 
-            comboBoxLangDst.Text = "English";
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -60,35 +39,73 @@ namespace NT
             int.TryParse(textBoxCol.Text, out col);
             int sheetRow = 0;
             int sheetCol = 0;
+            int sheetIndex;
             string translateText;
+            string[] AllSheets = inputFileXls.AllSheets;
+            int NumSheets = AllSheets.Length;
 
-            inputFileXls.SelectSheet(comboBox1.Text);
-            outputFileXls.SelectSheet(comboBox1.Text);
-
-            inputFileXls.GetRowCol(ref sheetRow, ref sheetCol);
-
-            for(row = 1; row <= sheetRow; row++)
+            for(sheetIndex = 3; sheetIndex <= NumSheets; sheetIndex++)
             {
-                for(col = 1; col <= sheetCol; col++)
+                // output and input focus on sheet
+                inputFileXls.SelectSheet(AllSheets[sheetIndex - 1]);
+                outputFileXls.SelectSheet(AllSheets[sheetIndex - 1]);
+
+                // Get row and col of sheet
+                inputFileXls.GetRowCol(ref sheetRow, ref sheetCol);
+
+                for (row = 1; row <= sheetRow; row++)
                 {
-                    string value = inputFileXls.CellValues(row, col);
+                    for (col = 1; col <= sheetCol; col++)
+                    {
+                        string value = inputFileXls.CellValues(row, col);
 
-                    textBoxDebug.Text = value;
+                        translateText = translator.Translate(value, comboBoxLangSrc.Text, comboBoxLangDst.Text);
 
-                    translateText = translator.Translate(value, comboBoxLangSrc.Text, comboBoxLangDst.Text);
+                        textBoxDebug.Text = translateText;
 
-                    outputFileXls.SetCellValues(row, col, translateText);
+                        outputFileXls.SetCellValues(row, col, translateText);
+
+                        Thread.Sleep(3000);
+                    }
                 }
             }
-
-            outputFileXls.Sysn();
-
+            
+            
+            
+            outputFileXls.SaveAs("Translated Testcase.xlsx");
+            MessageBox.Show("Translate done");
             //textBoxDebug.Text = translateText;
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             inputFileXls.Close();
+            outputFileXls.Close();
+        }
+
+        private void buttonStart_Click(object sender, EventArgs e)
+        {
+            translator = new Translator();
+
+            inputFileXls = new ExcelUtils();
+            inputFileXls.ExcellFileName = textBoxFileName.Text;
+            inputFileXls.Open();
+
+            outputFileXls = new ExcelUtils();
+            outputFileXls.ExcellFileName = textBoxFileName.Text;
+            outputFileXls.Open();
+
+            comboBox1.DataSource = inputFileXls.AllSheets;
+            comboBox1.Text = inputFileXls.AllSheets[0];
+
+            string[] langSrc = Translator.Languages.ToArray();
+            string[] langDst = Translator.Languages.ToArray();
+
+            comboBoxLangSrc.DataSource = langSrc;
+            comboBoxLangDst.DataSource = langDst;
+
+            comboBoxLangSrc.Text = "Vietnamese";
+            comboBoxLangDst.Text = "English";
         }
     }
 }
